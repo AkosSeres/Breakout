@@ -3,14 +3,14 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
-
+import java.util.concurrent.TimeUnit;
 import javax.swing.JFrame;
-
 import static java.awt.event.KeyEvent.VK_A;
 import static java.awt.event.KeyEvent.VK_D;
 import static java.awt.event.KeyEvent.VK_ESCAPE;
@@ -18,7 +18,7 @@ import static java.awt.event.KeyEvent.VK_LEFT;
 import static java.awt.event.KeyEvent.VK_RIGHT;
 
 public class Breakout extends JFrame implements Runnable {
-    private static final ExitMenu menu = new ExitMenu();
+	private static final long serialVersionUID = -7130255355742484287L;
     private static Breakout game;
     private static boolean goLeft = false;
     private static boolean goRight = false;
@@ -32,7 +32,6 @@ public class Breakout extends JFrame implements Runnable {
     private final int yBricks = 6;
     private final Rectangle[][] bricks = new Rectangle[xBricks][yBricks];
     private final boolean[][] isKilled = new boolean[xBricks][yBricks];
-    // --Commented out by Inspection (9/25/2016 13:54):Thread menuExitThread = new Thread(menu);
     private final Rectangle playButton = new Rectangle(30, 200, 150, 30);
     private final Rectangle quitButton = new Rectangle(230, 200, 150, 30);
     private final int padSize = 80;
@@ -56,8 +55,7 @@ public class Breakout extends JFrame implements Runnable {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setFocusable(true);
-        Image icon = new javax.swing.ImageIcon("icon.gif").getImage();
-        setIconImage(icon);
+        setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("icon.gif")));
         addKeyListener(new Key());
 
         Mouse m = new Mouse();
@@ -74,13 +72,18 @@ public class Breakout extends JFrame implements Runnable {
     public void run() {
         try {
             while (true) {
+            	long startTime, elapsedTime, wait=0;
+            	startTime = System.nanoTime();
                 if (!paused) {
                     movePad();
                     moveBall();
                     collisionWithBricks();
                     collisionWithPad();
                 }
-                Thread.sleep(20);
+                elapsedTime = System.nanoTime() - startTime;
+                if(elapsedTime < 20000000 && wait==0) TimeUnit.NANOSECONDS.sleep(20000000-elapsedTime);
+                else if(elapsedTime >= 20000000 && wait==0){ TimeUnit.NANOSECONDS.sleep(20000000); wait = elapsedTime - 20000000;}
+                else if(wait != 0){ TimeUnit.NANOSECONDS.sleep(20000000-elapsedTime-wait); wait = 0;}
             }
         } catch (Exception e) {
             System.out.println("ERROR");
@@ -107,7 +110,7 @@ public class Breakout extends JFrame implements Runnable {
                     ballSpeedX = +3;
                     ballSpeedY = -ballSpeedY;
                 } else {
-                    ballSpeedX = 0;
+                    ballSpeedX = (int) (Math.random() * 3)-1;
                     ballSpeedY = -3;
                 }
             }
@@ -318,7 +321,6 @@ public class Breakout extends JFrame implements Runnable {
     }
 
     private class Key implements KeyListener {
-        @Override
         public void keyPressed(KeyEvent e) {
             int keyCode = e.getKeyCode();
             if (keyCode == VK_A || keyCode == VK_LEFT) {
@@ -330,8 +332,6 @@ public class Breakout extends JFrame implements Runnable {
             if (keyCode == VK_ESCAPE)
                 game.dispatchEvent(new WindowEvent(game, WindowEvent.WINDOW_CLOSING));
         }
-
-        @Override
         public void keyReleased(KeyEvent e) {
             int keyCode = e.getKeyCode();
             if (keyCode == VK_A || keyCode == VK_LEFT) {
@@ -341,8 +341,6 @@ public class Breakout extends JFrame implements Runnable {
                 goRight = false;
             }
         }
-
-        @Override
         public void keyTyped(KeyEvent e) {
 
         }
